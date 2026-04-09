@@ -54,10 +54,10 @@ async def get_jobs(
         jobs = result.scalars().all()
         
         if not jobs:
-            return SAMPLE_JOBS[offset:limit]
+            return SAMPLE_JOBS[skip:limit]
         return jobs
     except Exception:
-        return SAMPLE_JOBS[offset:limit]
+        return SAMPLE_JOBS[skip:limit]
     
     return jobs
 
