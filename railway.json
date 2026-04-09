@@ -2,11 +2,10 @@
   "$schema": "https://railway.app/schema.json",
   "name": "jobsy",
   "builder": "DOCKERFILE",
-  "build": {
-    "command": "docker build -t jobsy ."
-  },
   "run": {
-    "command": "docker run -p $PORT:8000 jobsy"
+    "command": "python -m uvicorn main:app --host 0.0.0.0 --port $PORT"
   },
-  "environment": ["PYTHONUNBUFFERED=1"]
+  "environment": [
+    "PYTHONUNBUFFERED=1"
+  ]
 }
