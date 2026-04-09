@@ -2,16 +2,22 @@
 
 A WhatsApp-native job search assistant that finds, optimizes, and applies to jobs automatically.
 
+## Features
+
+- ✅ WhatsApp-native job search
+- ✅ AI-powered conversation (Ollama + Kimi K2.5)
+- ✅ ATS-optimized resume generation
+- ✅ Auto-apply with Playwright
+- ✅ Job evaluation (A-F system from career-ops)
+- ✅ Interview prep with STAR stories
+- ✅ Salary intelligence
+- ✅ Application tracking
+
 ## Quick Start
 
-### Local Development
-
 ```bash
-# Install dependencies
 cd backend
 pip install -r requirements.txt
-
-# Run server
 py main.py
 ```
 
@@ -34,17 +40,6 @@ See [DEPLOY.md](./DEPLOY.md) for detailed instructions.
 docker build -t jobsys .
 docker run -p 8000:8000 jobsys
 ```
-
-## Features
-
-- ✅ WhatsApp-native job search
-- ✅ AI-powered conversation (Ollama + Kimi K2.5)
-- ✅ ATS-optimized resume generation
-- ✅ Auto-apply with Playwright
-- ✅ Job evaluation (A-F system from career-ops)
-- ✅ Interview prep with STAR stories
-- ✅ Salary intelligence
-- ✅ Application tracking
 
 ## Tech Stack
 
