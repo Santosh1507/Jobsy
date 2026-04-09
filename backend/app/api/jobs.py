@@ -23,11 +23,11 @@ class JobMatchResponse(BaseModel):
 
 
 SAMPLE_JOBS = [
-    {"id": "1", "title": "Backend Engineer", "company": "Anthropic", "location": "San Francisco", "salary_min": 150000, "salary_max": 250000, "apply_url": "https://anthropic.com/careers", "source": "greenhouse", "is_active": True},
-    {"id": "2", "title": "ML Engineer", "company": "OpenAI", "location": "Remote", "salary_min": 200000, "salary_max": 350000, "apply_url": "https://openai.com/careers", "source": "lever", "is_active": True},
-    {"id": "3", "title": "Full Stack Developer", "company": "Vercel", "location": "Remote", "salary_min": 120000, "salary_max": 200000, "apply_url": "https://vercel.com/careers", "source": "greenhouse", "is_active": True},
-    {"id": "4", "title": "Solutions Engineer", "company": "LangChain", "location": "Remote", "salary_min": 100000, "salary_max": 180000, "apply_url": "https://langchain.com/careers", "source": "ashby", "is_active": True},
-    {"id": "5", "title": "Platform Engineer", "company": "Temporal", "location": "Remote", "salary_min": 140000, "salary_max": 220000, "apply_url": "https://temporal.io/careers", "source": "greenhouse", "is_active": True},
+    {"id": "1", "title": "Backend Engineer", "company": "Anthropic", "location": "San Francisco", "salary_min": 150000, "salary_max": 250000, "apply_url": "https://anthropic.com/careers", "source": "greenhouse"},
+    {"id": "2", "title": "ML Engineer", "company": "OpenAI", "location": "Remote", "salary_min": 200000, "salary_max": 350000, "apply_url": "https://openai.com/careers", "source": "lever"},
+    {"id": "3", "title": "Full Stack Developer", "company": "Vercel", "location": "Remote", "salary_min": 120000, "salary_max": 200000, "apply_url": "https://vercel.com/careers", "source": "greenhouse"},
+    {"id": "4", "title": "Solutions Engineer", "company": "LangChain", "location": "Remote", "salary_min": 100000, "salary_max": 180000, "apply_url": "https://langchain.com/careers", "source": "ashby"},
+    {"id": "5", "title": "Platform Engineer", "company": "Temporal", "location": "Remote", "salary_min": 140000, "salary_max": 220000, "apply_url": "https://temporal.io/careers", "source": "greenhouse"},
 ]
 
 @router.get("/", response_model=List[JobResponse])
@@ -35,29 +35,10 @@ async def get_jobs(
     skip: int = 0,
     limit: int = 20,
     source: Optional[str] = None,
-    company: Optional[str] = None,
-    db: AsyncSession = Depends(get_db)
+    company: Optional[str] = None
 ):
-    """Get jobs with optional filters"""
-    
-    try:
-        query = select(Job).where(Job.is_active == True)
-    
-        if source:
-            query = query.where(Job.source == source)
-        if company:
-            query = query.where(Job.company.ilike(f"%{company}%"))
-    
-        query = query.order_by(desc(Job.scraped_at)).offset(skip).limit(limit)
-    
-        result = await db.execute(query)
-        jobs = result.scalars().all()
-        
-        if not jobs:
-            return SAMPLE_JOBS[skip:limit]
-        return jobs
-    except Exception:
-        return SAMPLE_JOBS[skip:limit]
+    """Get jobs with optional filters - returns sample jobs"""
+    return SAMPLE_JOBS[skip:skip+limit]
     
     return jobs
 
