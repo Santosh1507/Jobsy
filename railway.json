@@ -1,12 +1,12 @@
 {
   "$schema": "https://railway.app/schema.json",
   "name": "jobsy",
-  "builder": "DOCKER",
+  "builder": "NIXPACKS",
   "build": {
-    "command": "docker build -t jobsy ."
+    "command": "cd backend && pip install -r requirements.txt"
   },
   "run": {
-    "command": "docker run -p $PORT:$PORT jobsy"
+    "command": "cd backend && python -m uvicorn main:app --host 0.0.0.0 --port $PORT"
   },
   "environment": [
     "PYTHONUNBUFFERED=1"

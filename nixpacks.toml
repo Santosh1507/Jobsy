@@ -1,0 +1,9 @@
+[build]
+build = "cd backend && pip install -r requirements.txt"
+run = "cd backend && python -m uvicorn main:app --host 0.0.0.0 --port $PORT"
+
+[dependencies.python]
+version = "3.11"
+
+[env]
+PYTHONUNBUFFERED = "1"
