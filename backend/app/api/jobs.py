@@ -30,7 +30,7 @@ SAMPLE_JOBS = [
     {"id": "5", "title": "Platform Engineer", "company": "Temporal", "location": "Remote", "salary_min": 140000, "salary_max": 220000, "apply_url": "https://temporal.io/careers", "source": "greenhouse"},
 ]
 
-@router.get("/", response_model=List[JobResponse])
+@router.get("/")
 async def get_jobs(
     skip: int = 0,
     limit: int = 20,
