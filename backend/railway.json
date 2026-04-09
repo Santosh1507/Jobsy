@@ -1,0 +1,24 @@
+{
+  "$schema": "https://railway.app/schema.json",
+  "name": "jobsy",
+  "builder": "NIXPACKS",
+  "build": {
+    "command": "pip install -r requirements.txt"
+  },
+  "run": {
+    "command": "uvicorn main:app --host 0.0.0.0 --port $PORT"
+  },
+  "environment": [
+    "PYTHONUNBUFFERED=1"
+  ],
+  "domains": [
+    {
+      "name": "jobsy"
+    }
+  ],
+  "options": {
+    "metadata": {
+      "name": "Jobsy - WhatsApp Job Platform"
+    }
+  }
+}

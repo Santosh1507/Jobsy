@@ -1,0 +1,123 @@
+from fastapi import APIRouter, Depends, HTTPException
+from typing import List, Optional
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, desc
+from pydantic import BaseModel
+from datetime import datetime
+
+from app.core.database import get_db
+from app.models.database import Job
+from app.models.schemas import JobResponse, JobCreate
+
+router = APIRouter(prefix="/jobs", tags=["Jobs"])
+
+
+class JobMatchRequest(BaseModel):
+    user_id: str
+    limit: int = 5
+
+
+class JobMatchResponse(BaseModel):
+    jobs: List[dict]
+    total: int
+
+
+@router.get("/", response_model=List[JobResponse])
+async def get_jobs(
+    skip: int = 0,
+    limit: int = 20,
+    source: Optional[str] = None,
+    company: Optional[str] = None,
+    db: AsyncSession = Depends(get_db)
+):
+    """Get jobs with optional filters"""
+    
+    query = select(Job).where(Job.is_active == True)
+    
+    if source:
+        query = query.where(Job.source == source)
+    if company:
+        query = query.where(Job.company.ilike(f"%{company}%"))
+    
+    query = query.order_by(desc(Job.scraped_at)).offset(skip).limit(limit)
+    
+    result = await db.execute(query)
+    jobs = result.scalars().all()
+    
+    return jobs
+
+
+@router.get("/{job_id}", response_model=JobResponse)
+async def get_job(job_id: str, db: AsyncSession = Depends(get_db)):
+    """Get single job by ID"""
+    
+    result = await db.execute(select(Job).where(Job.id == job_id))
+    job = result.scalar_one_or_none()
+    
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    return job
+
+
+@router.post("/match", response_model=JobMatchResponse)
+async def match_jobs(
+    request: JobMatchRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """Match jobs to user profile using vector similarity"""
+    
+    # This would use vector similarity matching
+    # For now, return recent jobs as placeholder
+    result = await db.execute(
+        select(Job)
+        .where(Job.is_active == True)
+        .order_by(desc(Job.scraped_at))
+        .limit(request.limit)
+    )
+    
+    jobs = result.scalars().all()
+    
+    job_list = []
+    for job in jobs:
+        job_list.append({
+            "id": str(job.id),
+            "title": job.title,
+            "company": job.company,
+            "location": job.location,
+            "salary": f"{job.salary_min} - {job.salary_max}" if job.salary_min else None,
+            "match_score": 75,  # Would be calculated from vector similarity
+            "apply_url": job.apply_url
+        })
+    
+    return {"jobs": job_list, "total": len(job_list)}
+
+
+@router.post("/")
+async def create_job(job: JobCreate, db: AsyncSession = Depends(get_db)):
+    """Create a new job (for internal use)"""
+    
+    from app.models.database import Job as JobModel
+    
+    db_job = JobModel(**job.dict())
+    db.add(db_job)
+    await db.commit()
+    await db.refresh(db_job)
+    
+    return {"id": str(db_job.id), "status": "created"}
+
+
+@router.get("/sources/list")
+async def list_sources():
+    """List available job sources"""
+    return {
+        "sources": [
+            {"id": "linkedin", "name": "LinkedIn"},
+            {"id": "naukri", "name": "Naukri"},
+            {"id": "instahyre", "name": "Instahyre"},
+            {"id": "wellfound", "name": "Wellfound"},
+            {"id": "cutshort", "name": "Cutshort"},
+            {"id": "iimjobs", "name": "IIM Jobs"},
+            {"id": "angelist", "name": "AngelList"}
+        ]
+    }
