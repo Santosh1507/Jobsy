@@ -137,6 +137,47 @@ async def whatsapp_webhook(request: Request, db: AsyncSession = Depends(get_db))
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/twilio")
+async def twilio_webhook(request: Request, db: AsyncSession = Depends(get_db)):
+    """Handle incoming Twilio WhatsApp messages"""
+    try:
+        form = await request.form()
+        
+        from_phone = form.get("From", "")
+        message_body = form.get("Body", "")
+        
+        if not from_phone or not message_body:
+            return {"success": True}
+        
+        logger.info(f"Twilio: Message from {from_phone}: {message_body[:50]}")
+        
+        # Process message
+        response_text = await process_user_message(
+            db=db,
+            user_id=from_phone,
+            message=message_body,
+            message_type="text"
+        )
+        
+        # Send response via Twilio
+        await whatsapp_service.send_message(
+            to=from_phone,
+            text=response_text
+        )
+        
+        return "<Response></Response>"
+    
+    except Exception as e:
+        logger.error(f"Twilio webhook error: {e}")
+        return "<Response></Response>"
+
+
+@router.get("/twilio")
+async def twilio_webhook_get():
+    """Twilio webhook GET handler"""
+    return {"status": "ok"}
+
+
 @router.get("/whatsapp")
 async def whatsapp_webhook_get(request: Request):
     """Handle WhatsApp webhook verification (GET)"""
