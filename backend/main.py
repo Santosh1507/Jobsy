@@ -78,16 +78,12 @@ async def test_webhook():
     """Direct test endpoint"""
     from app.services.whatsapp_service import whatsapp_service
     
-    # Send to user's WhatsApp number
+    # Send to user's WhatsApp number (not the Twilio sandbox)
     result = await whatsapp_service.send_message(
         to="whatsapp:+918688439658", 
         text="Hello from Jobsy! Your WhatsApp bot is working!"
     )
     return {"test": "sent", "result": result}
-        "sid": settings.TWILIO_ACCOUNT_SID,
-        "token": settings.TWILIO_AUTH_TOKEN[:5] + "..." if settings.TWILIO_AUTH_TOKEN else None,
-        "phone": settings.TWILIO_PHONE_NUMBER
-    }}
 
 
 # Health check
