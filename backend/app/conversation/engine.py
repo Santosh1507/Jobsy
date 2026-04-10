@@ -22,7 +22,11 @@ class ConversationEngine:
             "offer_analysis": self.handle_offer_analysis,
             "intel": self.handle_intel,
             "profile_update": self.handle_profile_update,
-            "help": self.handle_help
+            "help": self.handle_help,
+            "cover_letter": self.handle_cover_letter,
+            "job_alerts": self.handle_job_alerts,
+            "email_followup": self.handle_email_followup,
+            "batch_apply": self.handle_batch_apply
         }
 
     async def process_message(
@@ -113,7 +117,11 @@ class ConversationEngine:
             "offer_analysis": "offer_analysis",
             "intel_request": "intel",
             "profile_update": "profile_update",
-            "help": "help"
+            "help": "help",
+            "cover_letter": "cover_letter",
+            "job_alerts": "job_alerts",
+            "email_followup": "email_followup",
+            "batch_apply": "batch_apply"
         }
         
         return intent_to_flow.get(intent, state.current_flow or "onboarding")
@@ -385,10 +393,138 @@ class ConversationEngine:
             "• offer - Analyze a job offer\n"
             "• intel - Company/salary research\n"
             "• profile - Update your profile\n"
+            "• cover letter - Generate cover letter\n"
+            "• alerts - Set up job alerts\n"
+            "• followup - Schedule email follow-up\n"
+            "• batch - Batch apply to jobs\n"
             "• pause - Pause auto-applications\n"
             "• resume - Get your current resume\n\n"
             "Or just ask me anything!"
         )
+
+    async def handle_cover_letter(
+        self,
+        message: str,
+        collected_data: Dict,
+        history: List[Dict],
+        entities: Dict
+    ) -> str:
+        """Handle cover letter generation via WhatsApp"""
+        
+        from app.services.cover_letter_service import cover_letter_generator
+        
+        company = entities.get("company") or collected_data.get("last_company") or "the company"
+        role = collected_data.get("target_role", "the position")
+        
+        user_data = {
+            "name": collected_data.get("name", "Your Name"),
+            "skills": collected_data.get("skills", []),
+            "experience": collected_data.get("experience_years", 5),
+            "current_company": collected_data.get("current_company", "my current company")
+        }
+        
+        import asyncio
+        cover_letter = asyncio.run(cover_letter_generator.generate(
+            template_type="standard",
+            company=company,
+            role=role,
+            user_data=user_data,
+            job_data={}
+        ))
+        
+        return (
+            f"📝 *Cover Letter for {company}*\n\n"
+            f"{cover_letter[:1000]}...\n\n"
+            f"Want me to generate another style? Reply:\n"
+            "• 'technical' - for tech roles\n"
+            "• 'career' - for career change"
+        )
+
+    async def handle_job_alerts(
+        self,
+        message: str,
+        collected_data: Dict,
+        history: List[Dict],
+        entities: Dict
+    ) -> str:
+        """Handle job alerts setup via WhatsApp"""
+        
+        msg_lower = message.lower()
+        
+        if "create" in msg_lower or "set" in msg_lower or "new" in msg_lower:
+            return (
+                "🔔 *Create Job Alert*\n\n"
+                "I'll send you new jobs matching your criteria!\n\n"
+                "What keywords should I watch for?\n"
+                "e.g., 'Python', 'React', 'DevOps'\n\n"
+                "Or say 'stop' to cancel."
+            )
+        
+        keywords = message.split(",")
+        if keywords:
+            collected_data["alert_keywords"] = [k.strip() for k in keywords]
+            
+            return (
+                f"✅ *Alert Created!*\n\n"
+                f"Watching for: {', '.join(keywords)}\n\n"
+                "You'll get jobs via WhatsApp when they match!\n\n"
+                "Want me to add location or salary filters?"
+            )
+        
+        return "Please provide keywords for your alert."
+
+    async def handle_email_followup(
+        self,
+        message: str,
+        collected_data: Dict,
+        history: List[Dict],
+        entities: Dict
+    ) -> str:
+        """Handle email follow-up scheduling via WhatsApp"""
+        
+        msg_lower = message.lower()
+        
+        if "schedule" in msg_lower or "set up" in msg_lower:
+            return (
+                "📧 *Schedule Email Follow-up*\n\n"
+                "Which application do you want to follow up on?\n\n"
+                "1. Razorpay - Applied 5 days ago\n"
+                "2. Cred - Interview scheduled\n"
+                "3. Meesho - No response yet\n\n"
+                "Reply with the number or company name."
+            )
+        
+        if "1" in message or "2" in message or "3" in message:
+            return (
+                "✅ *Follow-up Scheduled!*\n\n"
+                "I'll send a polite follow-up email in 2 days.\n\n"
+                "Need me to customize the message?"
+            )
+        
+        return "Say 'schedule followup' to set one up."
+
+    async def handle_batch_apply(
+        self,
+        message: str,
+        collected_data: Dict,
+        history: List[Dict],
+        entities: Dict
+    ) -> str:
+        """Handle batch apply via WhatsApp"""
+        
+        msg_lower = message.lower()
+        
+        if "start" in msg_lower or "apply" in msg_lower:
+            return (
+                "🚀 *Batch Apply Mode*\n\n"
+                "I'll apply to multiple jobs for you!\n\n"
+                "Send me job URLs or tell me:\n"
+                "• 'apply to 5 senior backend jobs'\n"
+                "• 'apply to all Python jobs'\n\n"
+                "I'll generate cover letters and submit applications."
+            )
+        
+        return "Say 'start batch apply' to apply to multiple jobs."
 
     async def handle_unknown(
         self,

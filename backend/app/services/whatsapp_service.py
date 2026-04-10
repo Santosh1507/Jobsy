@@ -106,5 +106,81 @@ class WhatsAppService:
             text += f"• {btn.get('title')}\n"
         return await self.send_message(to, text)
 
+    async def send_job_alert(
+        self,
+        to: str,
+        jobs: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
+        """Send job alert with multiple jobs"""
+        if not jobs:
+            return await self.send_message(to, "No new jobs matching your alerts today! 🔍")
+        
+        text = f"🔔 *{len(jobs)} New Job Matches!*\n\n"
+        
+        for i, job in enumerate(jobs[:5], 1):
+            text += f"{i}. *{job.get('title', 'Position')}*\n"
+            text += f"   🏢 {job.get('company', 'Company')}\n"
+            if job.get('location'):
+                text += f"   📍 {job['location']}\n"
+            if job.get('salary'):
+                text += f"   💰 {job['salary']}\n"
+            text += "\n"
+        
+        if len(jobs) > 5:
+            text += f"_+{len(jobs) - 5} more jobs_"
+        
+        text += "\n\nReply with number to apply, or 'more' for more options."
+        
+        return await self.send_message(to, text)
+
+    async def send_interview_reminder(
+        self,
+        to: str,
+        company: str,
+        role: str,
+        time: str
+    ) -> Dict[str, Any]:
+        """Send interview reminder"""
+        text = (
+            f"🎯 *Interview Reminder!*\n\n"
+            f"📋 {role} at {company}\n"
+            f"⏰ {time}\n\n"
+            f"Want me to help you prepare? Reply 'prep {company}'"
+        )
+        return await self.send_message(to, text)
+
+    async def send_application_confirmation(
+        self,
+        to: str,
+        job_title: str,
+        company: str
+    ) -> Dict[str, Any]:
+        """Send application confirmation"""
+        text = (
+            f"✅ *Application Sent!*\n\n"
+            f"🎯 {job_title} at {company}\n\n"
+            f"I'll notify you when they view your resume!\n\n"
+            f"Reply 'status' to see all your applications."
+        )
+        return await self.send_message(to, text)
+
+    async def send_cover_letter(
+        self,
+        to: str,
+        company: str,
+        role: str,
+        cover_letter: str
+    ) -> Dict[str, Any]:
+        """Send generated cover letter"""
+        text = (
+            f"📝 *Cover Letter for {role}*\n\n"
+            f"_{cover_letter}_\n\n"
+            f"Want me to:\n"
+            f"• Generate a different style\n"
+            f"• Save this for later\n"
+            f"• Apply now with this"
+        )
+        return await self.send_message(to, text)
+
 
 whatsapp_service = WhatsAppService()
