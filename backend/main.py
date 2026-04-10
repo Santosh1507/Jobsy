@@ -76,22 +76,14 @@ async def root():
 @app.get("/test-webhook")
 async def test_webhook():
     """Direct test endpoint"""
-    from app.core.config import settings
     from app.services.whatsapp_service import whatsapp_service
     
-    # Debug - print all env vars related to Twilio
-    import os
-    twilio_vars = {
-        "TWILIO_ACCOUNT_SID": os.environ.get("TWILIO_ACCOUNT_SID"),
-        "TWILIO_AUTH_TOKEN": os.environ.get("TWILIO_AUTH_TOKEN"),
-        "TWILIO_PHONE_NUMBER": os.environ.get("TWILIO_PHONE_NUMBER"),
-    }
-    
+    # Send to user's WhatsApp number
     result = await whatsapp_service.send_message(
-        to="whatsapp:+14155238886", 
-        text="Test message from Jobsy!"
+        to="whatsapp:+918688439658", 
+        text="Hello from Jobsy! Your WhatsApp bot is working!"
     )
-    return {"test": "sent", "result": result, "env_vars": twilio_vars, "settings": {
+    return {"test": "sent", "result": result}
         "sid": settings.TWILIO_ACCOUNT_SID,
         "token": settings.TWILIO_AUTH_TOKEN[:5] + "..." if settings.TWILIO_AUTH_TOKEN else None,
         "phone": settings.TWILIO_PHONE_NUMBER
