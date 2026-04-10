@@ -39,6 +39,11 @@ app.add_middleware(
 async def startup_event():
     logger.info("Starting Jobsy WhatsApp Job Platform...")
     
+    from app.core.config import settings
+    logger.info(f"Twilio SID: {settings.TWILIO_ACCOUNT_SID[:10] if settings.TWILIO_ACCOUNT_SID else 'NOT SET'}")
+    logger.info(f"Twilio Auth: {settings.TWILIO_AUTH_TOKEN[:5] if settings.TWILIO_AUTH_TOKEN else 'NOT SET'}...")
+    logger.info(f"Twilio Phone: {settings.TWILIO_PHONE_NUMBER}")
+    
     # Initialize database
     try:
         await init_db()

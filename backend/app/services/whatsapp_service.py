@@ -16,6 +16,8 @@ class WhatsAppService:
         self.phone_number = settings.TWILIO_PHONE_NUMBER
         self.api_url = f"https://api.twilio.com/2010-04-01/Accounts/{self.account_sid}"
         
+        logger.info(f"Twilio Config: SID={self.account_sid[:10] if self.account_sid else 'None'}..., Phone={self.phone_number}")
+        
     def _get_auth(self) -> str:
         credentials = f"{self.account_sid}:{self.auth_token}"
         return base64.b64encode(credentials.encode()).decode()
