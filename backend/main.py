@@ -63,8 +63,20 @@ async def root():
         "name": settings.APP_NAME,
         "version": "1.0.0",
         "status": "running",
-        "docs": "/docs"
+        "docs": "/docs",
+        "webhook": "/webhook/twilio"
     }
+
+
+@app.get("/test-webhook")
+async def test_webhook():
+    """Direct test endpoint"""
+    from app.services.whatsapp_service import whatsapp_service
+    result = await whatsapp_service.send_message(
+        to="whatsapp:+14155238886", 
+        text="Test message from Jobsy!"
+    )
+    return {"test": "sent", "result": result}
 
 
 # Health check
