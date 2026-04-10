@@ -146,10 +146,10 @@ async def twilio_webhook(request: Request, db: AsyncSession = Depends(get_db)):
         from_phone = form.get("From", "")
         message_body = form.get("Body", "")
         
-        if not from_phone or not message_body:
-            return {"success": True}
+        logger.info(f"Twilio webhook: From={from_phone}, Body={message_body}")
         
-        logger.info(f"Twilio: Message from {from_phone}: {message_body[:50]}")
+        if not from_phone or not message_body:
+            return {"success": True, "reason": "no message"}
         
         # Process message
         response_text = await process_user_message(
@@ -159,16 +159,22 @@ async def twilio_webhook(request: Request, db: AsyncSession = Depends(get_db)):
             message_type="text"
         )
         
+        logger.info(f"Response: {response_text[:100]}")
+        
         # Send response via Twilio
-        await whatsapp_service.send_message(
+        send_result = await whatsapp_service.send_message(
             to=from_phone,
             text=response_text
         )
+        
+        logger.info(f"Send result: {send_result}")
         
         return "<Response></Response>"
     
     except Exception as e:
         logger.error(f"Twilio webhook error: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         return "<Response></Response>"
 
 
