@@ -10,6 +10,9 @@ from app.services.insider_intel_service import insider_intel_service
 from app.services.interview_prep_service import interview_prep_service
 from app.services.outreach_service import outreach_service
 from app.services.voice_interview_service import voice_mock_interview
+from app.services.cover_letter_service import cover_letter_generator
+from app.services.email_followup_service import email_followup_service
+from app.services.job_alert_service import job_alert_service
 
 router = APIRouter(prefix="/tools", tags=["Tools"])
 
@@ -69,6 +72,42 @@ class SubmitAnswerRequest(BaseModel):
 class StoryBankRequest(BaseModel):
     user_id: str
     story: dict
+
+
+class CoverLetterRequest(BaseModel):
+    user_data: dict
+    company: str
+    role: str
+    job_data: Optional[dict] = None
+    template_type: str = "standard"
+
+
+class EmailFollowUpRequest(BaseModel):
+    user_id: str
+    application_id: str
+    template_type: str = "initial_followup"
+    company: str
+    role: str
+    recruiter_name: Optional[str] = None
+    custom_fields: Optional[dict] = None
+
+
+class JobAlertRequest(BaseModel):
+    user_id: str
+    phone: str
+    keywords: List[str]
+    locations: Optional[List[str]] = None
+    salary_min: Optional[int] = None
+    remote_only: bool = False
+    companies: Optional[List[str]] = None
+    alert_type: str = "immediate"
+
+
+class BatchApplyRequest(BaseModel):
+    user_id: str
+    jobs: List[dict]
+    user_data: dict
+    cover_letter_template: Optional[str] = "standard"
 
 
 @router.post("/generate-pdf")
@@ -404,3 +443,217 @@ async def get_voice_interview_status(session_id: str):
         raise HTTPException(status_code=404, detail="Session not found")
     
     return status
+
+
+@router.post("/cover-letter")
+async def generate_cover_letter(request: CoverLetterRequest):
+    """Generate a cover letter"""
+    
+    result = await cover_letter_generator.generate(
+        template_type=request.template_type,
+        company=request.company,
+        role=request.role,
+        user_data=request.user_data,
+        job_data=request.job_data or {}
+    )
+    
+    return {
+        "success": True,
+        "cover_letter": result,
+        "template_type": request.template_type,
+        "company": request.company,
+        "role": request.role
+    }
+
+
+@router.get("/cover-letter/templates")
+async def get_cover_letter_templates():
+    """Get available cover letter templates"""
+    
+    return {
+        "templates": [
+            {"type": "standard", "description": "Standard professional format"},
+            {"type": "technical", "description": "Technical role focused"},
+            {"type": "career_change", "description": "For career transitions"}
+        ]
+    }
+
+
+@router.post("/email-followup/create")
+async def create_followup(request: EmailFollowUpRequest):
+    """Create an email follow-up"""
+    
+    result = email_followup_service.create_followup(
+        user_id=request.user_id,
+        application_id=request.application_id,
+        template_type=request.template_type,
+        company=request.company,
+        role=request.role,
+        recruiter_name=request.recruiter_name,
+        custom_fields=request.custom_fields
+    )
+    
+    return result
+
+
+@router.get("/email-followup/{user_id}/scheduled")
+async def get_scheduled_followups(user_id: str):
+    """Get scheduled follow-ups for a user"""
+    
+    followups = email_followup_service.get_scheduled_followups(user_id)
+    
+    return {"followups": followups}
+
+
+@router.get("/email-followup/templates")
+async def get_followup_templates():
+    """Get available email follow-up templates"""
+    
+    templates = email_followup_service.list_templates()
+    
+    return {"templates": templates}
+
+
+@router.delete("/email-followup/{followup_id}")
+async def cancel_followup(followup_id: str):
+    """Cancel a scheduled follow-up"""
+    
+    success = email_followup_service.cancel_followup(followup_id)
+    
+    if not success:
+        raise HTTPException(status_code=404, detail="Follow-up not found")
+    
+    return {"success": True, "status": "cancelled"}
+
+
+@router.post("/job-alerts/create")
+async def create_job_alert(request: JobAlertRequest):
+    """Create a job alert"""
+    
+    result = job_alert_service.create_alert(
+        user_id=request.user_id,
+        phone=request.phone,
+        keywords=request.keywords,
+        locations=request.locations or [],
+        salary_min=request.salary_min,
+        remote_only=request.remote_only,
+        companies=request.companies or [],
+        alert_type=request.alert_type
+    )
+    
+    return result
+
+
+@router.get("/job-alerts/{user_id}")
+async def get_job_alerts(user_id: str):
+    """Get all job alerts for a user"""
+    
+    alerts = job_alert_service.get_alerts(user_id)
+    
+    return {"alerts": alerts}
+
+
+@router.put("/job-alerts/{alert_id}")
+async def update_job_alert(
+    alert_id: str,
+    user_id: str,
+    updates: dict
+):
+    """Update a job alert"""
+    
+    success = job_alert_service.update_alert(user_id, alert_id, updates)
+    
+    if not success:
+        raise HTTPException(status_code=404, detail="Alert not found")
+    
+    return {"success": True}
+
+
+@router.delete("/job-alerts/{user_id}/{alert_id}")
+async def delete_job_alert(user_id: str, alert_id: str):
+    """Delete a job alert"""
+    
+    success = job_alert_service.delete_alert(user_id, alert_id)
+    
+    if not success:
+        raise HTTPException(status_code=404, detail="Alert not found")
+    
+    return {"success": True}
+
+
+@router.post("/job-alerts/match")
+async def match_jobs_to_alerts(user_id: str, jobs: List[dict]):
+    """Match jobs to user's alerts"""
+    
+    matches = job_alert_service.match_jobs(user_id, jobs)
+    
+    return {"matches": matches}
+
+
+@router.post("/job-alerts/notify")
+async def send_job_alert_notification(
+    user_id: str,
+    jobs: List[dict],
+    alert_id: str
+):
+    """Send job alert notification via WhatsApp"""
+    
+    alert = None
+    for a in job_alert_service.get_alerts(user_id):
+        if a["id"] == alert_id:
+            alert = a
+            break
+    
+    if not alert:
+        raise HTTPException(status_code=404, detail="Alert not found")
+    
+    result = job_alert_service.queue_notification(
+        user_id=user_id,
+        phone=alert["phone"],
+        jobs=jobs,
+        alert_id=alert_id
+    )
+    
+    return result
+
+
+@router.post("/batch-apply")
+async def batch_apply(request: BatchApplyRequest):
+    """Apply to multiple jobs"""
+    
+    from app.services.apply_service import apply_engine
+    
+    results = []
+    
+    for job in request.jobs:
+        cover_letter = None
+        if request.cover_letter_template:
+            cover_letter = await cover_letter_generator.generate(
+                template_type=request.cover_letter_template,
+                company=job.get("company", ""),
+                role=job.get("title", ""),
+                user_data=request.user_data,
+                job_data=job
+            )
+        
+        result = await apply_engine.apply_to_job(
+            user_id=request.user_id,
+            job_id=job.get("id", ""),
+            resume_data=request.user_data,
+            cover_letter=cover_letter
+        )
+        
+        results.append({
+            "job": job.get("title", "Unknown"),
+            "company": job.get("company", ""),
+            "result": result
+        })
+    
+    successful = sum(1 for r in results if r["result"].get("success"))
+    
+    return {
+        "total": len(request.jobs),
+        "successful": successful,
+        "failed": len(request.jobs) - successful,
+        "results": results
+    }
