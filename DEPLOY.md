@@ -23,17 +23,47 @@ git push -u origin main
 4. Add these Environment Variables:
 
 ```
+# Database (Supabase)
 DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@host:5432/db
-WHATSAPP_PHONE_NUMBER_ID=your_phone_number_id
-WHATSAPP_ACCESS_TOKEN=your_access_token
-WHATSAPP_VERIFY_TOKEN=jobsy_verify_token_123
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your_supabase_anon_key
+
+# Twilio WhatsApp (REQUIRED)
+TWILIO_ACCOUNT_SID=your_twilio_account_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
+TWILIO_PHONE_NUMBER=whatsapp:+14155238888
+
+# Ollama (for AI)
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=kimi-k2.5:cloud
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your_anon_key
+
+# App Settings
+APP_NAME="Jobsy"
+DEBUG=false
+MAX_APPLICATIONS_PER_DAY=20
 ```
 
 5. Click **Deploy**
+
+---
+
+## Twilio Setup
+
+1. Create a Twilio account at https://twilio.com
+2. Get your Account SID and Auth Token from console
+3. Enable WhatsApp in Twilio (Sandbox mode is free)
+4. Set webhook URL to: `https://your-app.railway.app/webhook/twilio`
+
+---
+
+## WhatsApp Commands (After Deploy)
+
+Once deployed, users can message Jobsy on WhatsApp:
+
+- `jobs` - Get job recommendations
+- `apply` - Apply to a job
+- `status` - Check applications
+- `help` - See all commands
 
 ---
 
