@@ -97,7 +97,7 @@ async def health_check():
 
 
 # Include routers
-app.include_router(whatsapp.router, prefix="/webhook")
+app.include_router(whatsapp.router)
 app.include_router(jobs.router, prefix="/api/v1")
 app.include_router(applications.router, prefix="/api/v1")
 app.include_router(subscriptions.router, prefix="/api/v1")
