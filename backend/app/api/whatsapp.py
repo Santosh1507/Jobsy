@@ -178,6 +178,14 @@ async def twilio_webhook(request: Request, db: AsyncSession = Depends(get_db)):
         return "<Response></Response>"
 
 
+@router.post("/twilio/test")
+async def twilio_test(request: Request):
+    """Test endpoint for Twilio"""
+    form = await request.form()
+    logger.info(f"TEST webhook received: {dict(form)}")
+    return {"received": True, "form": dict(form)}
+
+
 @router.get("/twilio")
 async def twilio_webhook_get():
     """Twilio webhook GET handler"""
